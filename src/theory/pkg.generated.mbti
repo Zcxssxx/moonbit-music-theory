@@ -7,23 +7,80 @@ import {
 }
 
 // Values
+pub fn analyze_chord_notes(Array[Note]) -> Result[(Note, ChordType, Int), String]
+
+pub fn analyze_progression_cadences(Array[String]) -> Array[(Int, String)]
+
+pub fn check_classical_progression(Array[String]) -> Array[String]
+
+pub fn check_first_species(Array[Note], Array[Note]) -> Array[CounterpointWarning]
+
+pub fn check_voicing_spacing(Array[Note]) -> Array[String]
+
+pub fn detect_cadence(String, String) -> String
+
+pub fn find_optimal_voicing(Array[Note], Note, ChordType) -> Array[Note]
+
+pub fn generate_augmented_sixth(Key, AugmentedSixthType) -> Array[Note]
+
 pub fn generate_chord(Note, ChordType) -> Array[Note]
+
+pub fn generate_chord_inversion(Note, ChordType, Int) -> Array[Note]
+
+pub fn generate_classical_progression(Key, Int, Int) -> Array[String]
+
+pub fn generate_diatonic_chords(Note, ScaleType, Int) -> Array[(String, Array[Note])]
+
+pub fn generate_neapolitan_sixth(Key) -> Array[Note]
+
+pub fn generate_progression(Key, Array[String]) -> Result[Array[Array[Note]], String]
 
 pub fn generate_scale(Note, ScaleType) -> Array[Note]
 
+pub fn get_chord_function(String) -> ChordFunction
+
 pub fn parse_chord_symbol(String) -> Result[(Note, ChordType), String]
+
+pub fn parse_slash_chord(String) -> Result[(Note, ChordType, Int), String]
+
+pub fn scale_common_notes(Array[Note], Array[Note]) -> Array[Note]
+
+pub fn scale_degree_name(Int) -> String
+
+pub fn to_drop_2(Array[Note]) -> Array[Note]
+
+pub fn to_drop_3(Array[Note]) -> Array[Note]
+
+pub fn to_open_voicing(Array[Note]) -> Array[Note]
 
 // Errors
 
 // Types and methods
 pub(all) enum Accidental {
+  DoubleFlat
   Flat
   Natural
   Sharp
+  DoubleSharp
 } derive(Eq, @debug.Debug)
 pub fn Accidental::to_int(Self) -> Int
 pub fn Accidental::to_string(Self) -> String
 pub impl Show for Accidental
+
+pub(all) enum AugmentedSixthType {
+  Italian
+  French
+  German
+} derive(Eq, @debug.Debug)
+pub fn AugmentedSixthType::to_string(Self) -> String
+pub impl Show for AugmentedSixthType
+
+pub(all) enum ChordFunction {
+  Tonic
+  Subdominant
+  Dominant
+  Unknown
+} derive(Eq, @debug.Debug)
 
 pub(all) enum ChordType {
   MajorTriad
@@ -35,10 +92,32 @@ pub(all) enum ChordType {
   MinorSeventh
   HalfDiminishedSeventh
   DiminishedSeventh
+  MajorNinth
+  MinorNinth
+  DominantNinth
+  MajorEleventh
+  MinorEleventh
+  DominantEleventh
+  MajorThirteenth
+  MinorThirteenth
+  DominantThirteenth
+  SuspendedSecond
+  SuspendedFourth
+  AlteredSeventhSharpNine
+  AlteredSeventhFlatNine
+  AlteredSeventhFlatFive
 } derive(Eq, @debug.Debug)
 pub fn ChordType::intervals(Self) -> Array[Interval]
 pub fn ChordType::to_string(Self) -> String
 pub impl Show for ChordType
+
+pub(all) struct CounterpointWarning {
+  index : Int
+  rule_name : String
+  message : String
+} derive(Eq, @debug.Debug)
+pub fn CounterpointWarning::to_string(Self) -> String
+pub impl Show for CounterpointWarning
 
 pub(all) struct Interval {
   quality : IntervalQuality
@@ -46,8 +125,11 @@ pub(all) struct Interval {
   semitones : Int
   direction : IntervalDirection
 } derive(Eq, @debug.Debug)
+pub fn Interval::add(Self, Self) -> Self
+pub fn Interval::invert(Self) -> Self
 pub fn Interval::new(IntervalQuality, Int, Int, IntervalDirection) -> Self
 pub fn Interval::parse(String) -> Result[Self, String]
+pub fn Interval::sub(Self, Self) -> Self
 pub fn Interval::to_string(Self) -> String
 pub impl Show for Interval
 pub impl ToJson for Interval
@@ -76,27 +158,78 @@ pub(all) struct Key {
   scale_type : ScaleType
 } derive(Eq, @debug.Debug)
 pub fn Key::analyze_chord(Self, String) -> Result[String, String]
+pub fn Key::chord_from_roman(Self, String) -> Result[String, String]
 pub fn Key::diatonic_notes(Self) -> Array[Note]
 pub fn Key::new(NoteLetter, Accidental, ScaleType) -> Self
+pub fn Key::parallel_key(Self) -> Self
+pub fn Key::relative_major(Self) -> Result[Self, String]
+pub fn Key::relative_minor(Self) -> Result[Self, String]
+pub fn Key::sharps_or_flats(Self) -> (Int, Accidental)
 pub fn Key::to_string(Self) -> String
 pub impl Show for Key
 pub impl ToJson for Key
 pub impl @json.FromJson for Key
+
+pub(all) struct MidiEvent {
+  delta_time : Int
+  status : Int
+  data1 : Int
+  data2 : Int
+} derive(Eq, @debug.Debug)
+pub fn MidiEvent::to_json(Self) -> Json
+
+pub(all) struct MidiFile {
+  ppq : Int
+  tracks : Array[MidiTrack]
+} derive(Eq, @debug.Debug)
+pub fn MidiFile::add_track(Self, String) -> MidiTrack
+pub fn MidiFile::new(Int) -> Self
+pub fn MidiFile::to_json(Self) -> Json
+
+pub(all) struct MidiTrack {
+  name : String
+  events : Array[MidiEvent]
+} derive(Eq, @debug.Debug)
+pub fn MidiTrack::add_chord(Self, Int, Array[Note], Int, Int) -> Unit
+pub fn MidiTrack::add_note_off(Self, Int, Note) -> Unit
+pub fn MidiTrack::add_note_on(Self, Int, Note, Int) -> Unit
+pub fn MidiTrack::to_json(Self) -> Json
 
 pub(all) struct Note {
   letter : NoteLetter
   accidental : Accidental
   octave : Int
 } derive(Eq, @debug.Debug)
+pub fn Note::frequency_tuned(Self, TuningSystem, Double) -> Double
+pub fn Note::from_frequency(Double, Double) -> Self
 pub fn Note::from_midi(Int) -> Self
 pub fn Note::new(NoteLetter, Accidental, Int) -> Self
 pub fn Note::parse(String) -> Result[Self, String]
+pub fn Note::to_frequency(Self, Double) -> Double
 pub fn Note::to_midi(Self) -> Int
 pub fn Note::to_string(Self) -> String
 pub fn Note::transpose(Self, Interval) -> Self
 pub impl Show for Note
 pub impl ToJson for Note
 pub impl @json.FromJson for Note
+
+pub(all) enum NoteDuration {
+  DoubleWhole
+  Whole
+  Half
+  Quarter
+  Eighth
+  Sixteenth
+  ThirtySecond
+  SixtyFourth
+} derive(Eq, @debug.Debug)
+pub fn NoteDuration::dotted(Self, TimeSignature, Int) -> Double
+pub fn NoteDuration::to_beats(Self, TimeSignature) -> Double
+pub fn NoteDuration::to_seconds(Self, TimeSignature, Double) -> Double
+pub fn NoteDuration::to_string(Self) -> String
+pub fn NoteDuration::to_ticks(Self, Int) -> Int
+pub fn NoteDuration::tuplet(Self, TimeSignature, Int, Int) -> Double
+pub impl Show for NoteDuration
 
 pub(all) enum NoteLetter {
   C
@@ -112,6 +245,19 @@ pub fn NoteLetter::to_int(Self) -> Int
 pub fn NoteLetter::to_string(Self) -> String
 pub impl Show for NoteLetter
 
+pub(all) struct PitchClassSet {
+  pcs : Array[Int]
+} derive(Eq, @debug.Debug)
+pub fn PitchClassSet::from_notes(Array[Note]) -> Self
+pub fn PitchClassSet::interval_class_vector(Self) -> Array[Int]
+pub fn PitchClassSet::invert(Self, Int) -> Self
+pub fn PitchClassSet::new(Array[Int]) -> Self
+pub fn PitchClassSet::normal_form(Self) -> Self
+pub fn PitchClassSet::prime_form(Self) -> Self
+pub fn PitchClassSet::to_string(Self) -> String
+pub fn PitchClassSet::transpose(Self, Int) -> Self
+pub impl Show for PitchClassSet
+
 pub(all) enum ScaleType {
   Major
   Minor
@@ -122,11 +268,40 @@ pub(all) enum ScaleType {
   Locrian
   PentatonicMajor
   PentatonicMinor
+  HarmonicMajor
+  HarmonicMinor
+  MelodicMinor
+  WholeTone
+  OctatonicHalfWhole
+  OctatonicWholeHalf
+  SuperLocrian
+  Gypsy
+  LydianDominant
+  PhrygianDominant
 } derive(Eq, @debug.Debug)
 pub fn ScaleType::intervals(Self) -> Array[Interval]
+pub fn ScaleType::parent_scale(Self) -> String
 pub fn ScaleType::parse(String) -> Result[Self, String]
 pub fn ScaleType::to_string(Self) -> String
 pub impl Show for ScaleType
+
+pub(all) struct TimeSignature {
+  beats : Int
+  beat_value : Int
+} derive(Eq, @debug.Debug)
+pub fn TimeSignature::new(Int, Int) -> Self
+pub fn TimeSignature::to_string(Self) -> String
+pub impl Show for TimeSignature
+
+pub(all) enum TuningSystem {
+  EqualTemperament
+  Pythagorean
+  JustIntonation
+  Meantone
+} derive(Eq, @debug.Debug)
+pub fn TuningSystem::parse(String) -> Result[Self, String]
+pub fn TuningSystem::to_string(Self) -> String
+pub impl Show for TuningSystem
 
 // Type aliases
 

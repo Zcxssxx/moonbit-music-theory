@@ -27,3 +27,34 @@ test "pitch parsing and midi conversion" {
   let note4 = Note::from_midi(60)
   inspect(note4.to_string(), content="C4")
 }
+
+///|
+test "double accidentals parsing and midi" {
+  let note_dsharp = Note::parse("C##4").unwrap()
+  inspect(note_dsharp.to_string(), content="C##4")
+  inspect(note_dsharp.to_midi(), content="62")
+
+  let note_dflat = Note::parse("Dbb4").unwrap()
+  inspect(note_dflat.to_string(), content="Dbb4")
+  inspect(note_dflat.to_midi(), content="60") // D4=62. DoubleFlat = -2. 62 - 2 = 60.
+  inspect(note_dflat.to_midi(), content="60")
+
+  let note_x = Note::parse("Cx4").unwrap()
+  inspect(note_x.to_string(), content="C##4")
+  inspect(note_x.to_midi(), content="62")
+}
+
+///|
+test "pitch frequency conversion" {
+  let a4 = Note::parse("A4").unwrap()
+  let freq = a4.to_frequency(440.0)
+  inspect(freq, content="440")
+
+  let c4 = Note::parse("C4").unwrap()
+  let c4_freq = c4.to_frequency(440.0)
+  // 440.0 * 2^(-9/12) = 261.6255653005986
+  inspect(c4_freq, content="261.6255653005986")
+
+  let parsed_c4 = Note::from_frequency(261.63, 440.0)
+  inspect(parsed_c4.to_string(), content="C4")
+}

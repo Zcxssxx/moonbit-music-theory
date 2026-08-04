@@ -14,6 +14,15 @@ fn print_usage() -> Unit {
   println(
     "  moon run src/cli -- roman <key_root> <key_type> <chord> - Analyze roman numeral degree (e.g. C major G7)",
   )
+  println(
+    "  moon run src/cli -- progression <key_root> <key_type> <progression_csv> - Generate progression with voice leading (e.g. C major I,vi,IV,V)",
+  )
+  println(
+    "  moon run src/cli -- counterpoint <cf_csv> <cp_csv>    - Check 1st species counterpoint rules (e.g. C4,D4,E4,D4,C4 C5,B4,G4,B4,C5)",
+  )
+  println(
+    "  moon run src/cli -- analyze-chord <notes_csv>        - Detect chord name from notes list (e.g. C4,E4,G4)",
+  )
 }
 
 ///|
@@ -187,6 +196,161 @@ fn main {
         Ok(r) =>
           println(
             "{\"key\":\"\{key}\",\"chord\":\"\{chord_str}\",\"result\":\"\{r}\"}",
+          )
+        Err(err) => println("Error: \{err}")
+      }
+    }
+    "progression" => {
+      if args.length() < 5 {
+        println("Error: Missing key_root, key_type and progression csv")
+        print_usage()
+        return
+      }
+      let key_root_str = args[2]
+      let key_type_str = args[3]
+      let prog_csv = args[4]
+
+      let key_root_note_str = if key_root_str.length() > 0 {
+        let last_char = key_root_str[key_root_str.length() - 1]
+        let is_digit = last_char.to_int() - '0'.to_int() >= 0 &&
+          last_char.to_int() - '0'.to_int() <= 9
+        if is_digit {
+          key_root_str
+        } else {
+          key_root_str + "4"
+        }
+      } else {
+        "C4"
+      }
+
+      let key_root = match @theory.Note::parse(key_root_note_str) {
+        Ok(n) => n
+        Err(err) => {
+          println("Error parsing key root note: \{err}")
+          return
+        }
+      }
+
+      let key_scale_type = match @theory.ScaleType::parse(key_type_str) {
+        Ok(t) => t
+        Err(err) => {
+          println("Error parsing key scale type: \{err}")
+          return
+        }
+      }
+
+      let key = @theory.Key::new(
+        key_root.letter,
+        key_root.accidental,
+        key_scale_type,
+      )
+
+      let roman_numerals = prog_csv
+        .split(",")
+        .collect()
+        .map(fn(s) { s.to_owned() })
+      match @theory.generate_progression(key, roman_numerals) {
+        Ok(voicings) => {
+          let mut voicings_json = "["
+          for i in 0..<voicings.length() {
+            if i > 0 {
+              voicings_json = voicings_json + ","
+            }
+            let notes_strs = voicings[i].map(fn(n) { n.to_string() })
+            let mut v_json = "["
+            for j in 0..<notes_strs.length() {
+              if j > 0 {
+                v_json = v_json + ","
+              }
+              v_json = v_json + "\"" + notes_strs[j] + "\""
+            }
+            v_json = v_json + "]"
+            voicings_json = voicings_json + v_json
+          }
+          voicings_json = voicings_json + "]"
+          println(
+            "{\"key\":\"\{key}\",\"progression\":[\"\{prog_csv}\"],\"voicings\":\{voicings_json}}",
+          )
+        }
+        Err(err) => println("Error: \{err}")
+      }
+    }
+    "counterpoint" => {
+      if args.length() < 4 {
+        println("Error: Missing cantus firmus and counterpoint csv")
+        print_usage()
+        return
+      }
+      let cf_csv = args[2]
+      let cp_csv = args[3]
+
+      let cf_strs = cf_csv.split(",").collect()
+      let cp_strs = cp_csv.split(",").collect()
+
+      let cf_notes = []
+      for s in cf_strs {
+        match @theory.Note::parse(s.to_owned()) {
+          Ok(n) => cf_notes.push(n)
+          Err(err) => {
+            println("Error parsing cantus firmus note: \{err}")
+            return
+          }
+        }
+      }
+
+      let cp_notes = []
+      for s in cp_strs {
+        match @theory.Note::parse(s.to_owned()) {
+          Ok(n) => cp_notes.push(n)
+          Err(err) => {
+            println("Error parsing counterpoint note: \{err}")
+            return
+          }
+        }
+      }
+
+      let warnings = @theory.check_first_species(cf_notes, cp_notes)
+      let mut warnings_json = "["
+      for i in 0..<warnings.length() {
+        if i > 0 {
+          warnings_json = warnings_json + ","
+        }
+        let w = warnings[i]
+        warnings_json = warnings_json +
+          "{\"index\":\{w.index},\"rule\":\"\{w.rule_name}\",\"message\":\"\{w.message}\"}"
+      }
+      warnings_json = warnings_json + "]"
+
+      println(
+        "{\"status\":\"" +
+        (if warnings.length() == 0 { "passed" } else { "warnings" }) +
+        "\",\"warnings\":\{warnings_json}}",
+      )
+    }
+    "analyze-chord" => {
+      if args.length() < 3 {
+        println("Error: Missing notes list csv")
+        print_usage()
+        return
+      }
+      let notes_csv = args[2]
+      let notes_strs = notes_csv.split(",").collect()
+
+      let notes = []
+      for s in notes_strs {
+        match @theory.Note::parse(s.to_owned()) {
+          Ok(n) => notes.push(n)
+          Err(err) => {
+            println("Error parsing note: \{err}")
+            return
+          }
+        }
+      }
+
+      match @theory.analyze_chord_notes(notes) {
+        Ok((root, ty, inv)) =>
+          println(
+            "{\"detected_root\":\"\{root}\",\"type\":\"\{ty}\",\"inversion\":\{inv}}",
           )
         Err(err) => println("Error: \{err}")
       }

@@ -11,9 +11,11 @@ pub(all) enum NoteLetter {
 
 ///|
 pub(all) enum Accidental {
+  DoubleFlat
   Flat
   Natural
   Sharp
+  DoubleSharp
 } derive(Eq, Debug)
 
 ///|
@@ -62,9 +64,11 @@ pub fn NoteLetter::from_int(val : Int) -> NoteLetter {
 ///|
 pub fn Accidental::to_int(self : Accidental) -> Int {
   match self {
+    DoubleFlat => -2
     Flat => -1
     Natural => 0
     Sharp => 1
+    DoubleSharp => 2
   }
 }
 
@@ -78,7 +82,7 @@ pub fn Note::to_midi(self : Note) -> Int {
 ///|
 pub fn Note::from_midi(midi : Int) -> Note {
   let octave = midi / 12 - 1
-  let pc = midi % 12
+  let pc = (midi % 12 + 12) % 12
   let (letter, accidental) = match pc {
     0 => (NoteLetter::C, Accidental::Natural)
     1 => (NoteLetter::C, Accidental::Sharp)
@@ -113,9 +117,11 @@ pub fn NoteLetter::to_string(self : NoteLetter) -> String {
 ///|
 pub fn Accidental::to_string(self : Accidental) -> String {
   match self {
+    DoubleFlat => "bb"
     Flat => "b"
     Natural => ""
     Sharp => "#"
+    DoubleSharp => "##"
   }
 }
 
@@ -162,13 +168,30 @@ pub fn Note::parse(str : String) -> Result[Note, String] {
   let mut acc = Accidental::Natural
   let mut idx = 1
   if idx < len {
-    let c = str[idx]
-    if c == '#' || c == 's' || c == 'S' {
+    let c1 = str[idx]
+    if c1 == '#' || c1 == 's' || c1 == 'S' {
       acc = Accidental::Sharp
       idx = idx + 1
-    } else if c == 'b' || c == 'B' {
+      if idx < len {
+        let c2 = str[idx]
+        if c2 == '#' || c2 == 's' || c2 == 'S' {
+          acc = Accidental::DoubleSharp
+          idx = idx + 1
+        }
+      }
+    } else if c1 == 'x' || c1 == 'X' {
+      acc = Accidental::DoubleSharp
+      idx = idx + 1
+    } else if c1 == 'b' || c1 == 'B' {
       acc = Accidental::Flat
       idx = idx + 1
+      if idx < len {
+        let c2 = str[idx]
+        if c2 == 'b' || c2 == 'B' {
+          acc = Accidental::DoubleFlat
+          idx = idx + 1
+        }
+      }
     }
   }
 
@@ -205,4 +228,20 @@ pub fn Note::parse(str : String) -> Result[Note, String] {
 
   let octave = if is_neg { -oct_val } else { oct_val }
   Ok({ letter, accidental: acc, octave })
+}
+
+///|
+pub fn Note::to_frequency(self : Note, reference_pitch : Double) -> Double {
+  let d = self.to_midi().to_double() - 69.0
+  reference_pitch * @math.pow(2.0, d / 12.0)
+}
+
+///|
+pub fn Note::from_frequency(
+  frequency : Double,
+  reference_pitch : Double,
+) -> Note {
+  let d = 12.0 * @math.log2(frequency / reference_pitch)
+  let midi = (d + 69.0 + 0.5).to_int()
+  Note::from_midi(midi)
 }
