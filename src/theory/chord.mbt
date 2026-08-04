@@ -109,6 +109,19 @@ pub fn parse_chord_symbol(symbol : String) -> Result[(Note, ChordType), String] 
     }
   }
 
+  // Disambiguation: if the digits go to the end and represent just "7",
+  // it is the chord suffix, not the octave.
+  if temp_idx == len && has_octave {
+    let is_seven = if is_neg {
+      false
+    } else {
+      octave_val == 7
+    }
+    if is_seven {
+      has_octave = false
+    }
+  }
+
   let octave = if has_octave {
     idx = temp_idx
     if is_neg { -octave_val } else { octave_val }
