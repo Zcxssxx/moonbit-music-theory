@@ -1,3 +1,4 @@
+///|
 pub(all) enum ScaleType {
   Major
   Minor
@@ -10,6 +11,7 @@ pub(all) enum ScaleType {
   PentatonicMinor
 } derive(Eq, Debug)
 
+///|
 pub fn ScaleType::to_string(self : ScaleType) -> String {
   match self {
     Major => "major"
@@ -24,6 +26,7 @@ pub fn ScaleType::to_string(self : ScaleType) -> String {
   }
 }
 
+///|
 pub fn ScaleType::parse(str : String) -> Result[ScaleType, String] {
   match str {
     "major" | "Ionian" | "ionian" => Ok(ScaleType::Major)
@@ -39,6 +42,7 @@ pub fn ScaleType::parse(str : String) -> Result[ScaleType, String] {
   }
 }
 
+///|
 pub fn ScaleType::intervals(self : ScaleType) -> Array[Interval] {
   let spec = match self {
     Major => ["P1", "M2", "M3", "P4", "P5", "M6", "M7"]
@@ -61,6 +65,7 @@ pub fn ScaleType::intervals(self : ScaleType) -> Array[Interval] {
   res
 }
 
+///|
 pub fn generate_scale(root : Note, scale_type : ScaleType) -> Array[Note] {
   let intervals = scale_type.intervals()
   let notes = []
@@ -70,6 +75,7 @@ pub fn generate_scale(root : Note, scale_type : ScaleType) -> Array[Note] {
   notes
 }
 
+///|
 pub impl Show for ScaleType with fn output(self, logger) {
   logger.write_string(self.to_string())
 }

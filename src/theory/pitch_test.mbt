@@ -1,3 +1,4 @@
+///|
 test "pitch parsing and midi conversion" {
   let note1 = Note::parse("C4")
   let note1_str = match note1 {

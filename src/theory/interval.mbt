@@ -1,3 +1,4 @@
+///|
 pub(all) enum IntervalQuality {
   Perfect
   Major
@@ -6,11 +7,13 @@ pub(all) enum IntervalQuality {
   Diminished
 } derive(Eq, Debug)
 
+///|
 pub(all) enum IntervalDirection {
   Up
   Down
 } derive(Eq, Debug)
 
+///|
 pub(all) struct Interval {
   quality : IntervalQuality
   number : Int // 1 for Unison, 2 for Second, etc.
@@ -18,10 +21,17 @@ pub(all) struct Interval {
   direction : IntervalDirection
 } derive(Eq, Debug)
 
-pub fn Interval::new(quality : IntervalQuality, number : Int, semitones : Int, direction : IntervalDirection) -> Interval {
+///|
+pub fn Interval::new(
+  quality : IntervalQuality,
+  number : Int,
+  semitones : Int,
+  direction : IntervalDirection,
+) -> Interval {
   { quality, number, semitones, direction }
 }
 
+///|
 pub fn IntervalQuality::to_string(self : IntervalQuality) -> String {
   match self {
     Perfect => "P"
@@ -32,6 +42,7 @@ pub fn IntervalQuality::to_string(self : IntervalQuality) -> String {
   }
 }
 
+///|
 pub fn IntervalDirection::to_string(self : IntervalDirection) -> String {
   match self {
     Up => "Up"
@@ -39,6 +50,7 @@ pub fn IntervalDirection::to_string(self : IntervalDirection) -> String {
   }
 }
 
+///|
 pub fn Interval::to_string(self : Interval) -> String {
   let q = self.quality.to_string()
   let dir = match self.direction {
@@ -48,18 +60,22 @@ pub fn Interval::to_string(self : Interval) -> String {
   "\{dir}\{q}\{self.number}"
 }
 
+///|
 pub impl Show for IntervalQuality with fn output(self, logger) {
   logger.write_string(self.to_string())
 }
 
+///|
 pub impl Show for IntervalDirection with fn output(self, logger) {
   logger.write_string(self.to_string())
 }
 
+///|
 pub impl Show for Interval with fn output(self, logger) {
   logger.write_string(self.to_string())
 }
 
+///|
 pub fn Interval::parse(str : String) -> Result[Interval, String] {
   let len = str.length()
   if len < 2 {
@@ -122,13 +138,24 @@ pub fn Interval::parse(str : String) -> Result[Interval, String] {
     Perfect => diatonic_semitones
     Major => diatonic_semitones
     Minor => diatonic_semitones - 1
-    Augmented => if num == 1 || num == 4 || num == 5 || num == 8 { diatonic_semitones + 1 } else { diatonic_semitones + 1 }
-    Diminished => if num == 1 || num == 4 || num == 5 || num == 8 { diatonic_semitones - 1 } else { diatonic_semitones - 2 }
+    Augmented =>
+      if num == 1 || num == 4 || num == 5 || num == 8 {
+        diatonic_semitones + 1
+      } else {
+        diatonic_semitones + 1
+      }
+    Diminished =>
+      if num == 1 || num == 4 || num == 5 || num == 8 {
+        diatonic_semitones - 1
+      } else {
+        diatonic_semitones - 2
+      }
   }
 
   Ok({ quality, number: num, semitones, direction: dir })
 }
 
+///|
 pub fn Note::transpose(self : Note, interval : Interval) -> Note {
   let steps = match interval.direction {
     Up => interval.number - 1
@@ -144,13 +171,9 @@ pub fn Note::transpose(self : Note, interval : Interval) -> Note {
     B => 6
   }
   let sum = base_idx + steps
-  let octave_change = if sum >= 0 {
-    sum / 7
-  } else {
-    (sum - 6) / 7
-  }
-  
-  let new_letter = match ((sum % 7) + 7) % 7 {
+  let octave_change = if sum >= 0 { sum / 7 } else { (sum - 6) / 7 }
+
+  let new_letter = match (sum % 7 + 7) % 7 {
     0 => NoteLetter::C
     1 => NoteLetter::D
     2 => NoteLetter::E
@@ -168,7 +191,11 @@ pub fn Note::transpose(self : Note, interval : Interval) -> Note {
   }
   let desired_midi = original_midi + interval_semitones
 
-  let transposed_natural_note = Note::new(new_letter, Accidental::Natural, self.octave + octave_change)
+  let transposed_natural_note = Note::new(
+    new_letter,
+    Accidental::Natural,
+    self.octave + octave_change,
+  )
   let natural_midi = transposed_natural_note.to_midi()
   let diff = desired_midi - natural_midi
 

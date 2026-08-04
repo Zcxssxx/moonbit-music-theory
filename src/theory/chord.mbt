@@ -1,3 +1,4 @@
+///|
 pub(all) enum ChordType {
   MajorTriad
   MinorTriad
@@ -10,6 +11,7 @@ pub(all) enum ChordType {
   DiminishedSeventh
 } derive(Eq, Debug)
 
+///|
 pub fn ChordType::to_string(self : ChordType) -> String {
   match self {
     MajorTriad => "major"
@@ -24,6 +26,7 @@ pub fn ChordType::to_string(self : ChordType) -> String {
   }
 }
 
+///|
 pub fn ChordType::intervals(self : ChordType) -> Array[Interval] {
   let spec = match self {
     MajorTriad => ["P1", "M3", "P5"]
@@ -46,6 +49,7 @@ pub fn ChordType::intervals(self : ChordType) -> Array[Interval] {
   res
 }
 
+///|
 pub fn generate_chord(root : Note, chord_type : ChordType) -> Array[Note] {
   let intervals = chord_type.intervals()
   let notes = []
@@ -55,6 +59,7 @@ pub fn generate_chord(root : Note, chord_type : ChordType) -> Array[Note] {
   notes
 }
 
+///|
 pub fn parse_chord_symbol(symbol : String) -> Result[(Note, ChordType), String] {
   let len = symbol.length()
   if len == 0 {
@@ -112,11 +117,7 @@ pub fn parse_chord_symbol(symbol : String) -> Result[(Note, ChordType), String] 
   // Disambiguation: if the digits go to the end and represent just "7",
   // it is the chord suffix, not the octave.
   if temp_idx == len && has_octave {
-    let is_seven = if is_neg {
-      false
-    } else {
-      octave_val == 7
-    }
+    let is_seven = if is_neg { false } else { octave_val == 7 }
     if is_seven {
       has_octave = false
     }
@@ -124,17 +125,17 @@ pub fn parse_chord_symbol(symbol : String) -> Result[(Note, ChordType), String] 
 
   let octave = if has_octave {
     idx = temp_idx
-    if is_neg { -octave_val } else { octave_val }
+    if is_neg {
+      -octave_val
+    } else {
+      octave_val
+    }
   } else {
     4 // default octave
   }
 
   let root = Note::new(letter, acc, octave)
-  let suffix = if idx < len {
-    symbol[idx:].to_owned()
-  } else {
-    ""
-  }
+  let suffix = if idx < len { symbol[idx:].to_owned() } else { "" }
 
   let chord_type = match suffix {
     "" | "maj" | "M" | "major" => ChordType::MajorTriad
@@ -152,6 +153,7 @@ pub fn parse_chord_symbol(symbol : String) -> Result[(Note, ChordType), String] 
   Ok((root, chord_type))
 }
 
+///|
 pub impl Show for ChordType with fn output(self, logger) {
   logger.write_string(self.to_string())
 }

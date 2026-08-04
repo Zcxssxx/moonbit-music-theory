@@ -1,3 +1,4 @@
+///|
 test "roman numeral analysis" {
   let c_major = Key::new(NoteLetter::C, Accidental::Natural, ScaleType::Major)
 
@@ -21,11 +22,7 @@ test "roman numeral analysis" {
   }
 
   let a_minor = Key::new(NoteLetter::A, Accidental::Natural, ScaleType::Minor)
-  let a_minor_cases = [
-    ("Am", "Ok(i)"),
-    ("Dm", "Ok(iv)"),
-    ("E7", "Ok(V7)"),
-  ]
+  let a_minor_cases = [("Am", "Ok(i)"), ("Dm", "Ok(iv)"), ("E7", "Ok(V7)")]
 
   for tc in a_minor_cases {
     let chord = tc.0

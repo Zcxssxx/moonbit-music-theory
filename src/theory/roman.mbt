@@ -1,13 +1,20 @@
+///|
 pub(all) struct Key {
   root : NoteLetter
   accidental : Accidental
   scale_type : ScaleType
 } derive(Eq, Debug)
 
-pub fn Key::new(root : NoteLetter, accidental : Accidental, scale_type : ScaleType) -> Key {
+///|
+pub fn Key::new(
+  root : NoteLetter,
+  accidental : Accidental,
+  scale_type : ScaleType,
+) -> Key {
   { root, accidental, scale_type }
 }
 
+///|
 pub fn Key::to_string(self : Key) -> String {
   let root_str = self.root.to_string()
   let acc_str = self.accidental.to_string()
@@ -15,17 +22,24 @@ pub fn Key::to_string(self : Key) -> String {
   "\{root_str}\{acc_str} \{type_str}"
 }
 
+///|
 pub impl Show for Key with fn output(self, logger) {
   logger.write_string(self.to_string())
 }
 
 // Generate the 7 diatonic notes of the key
+
+///|
 pub fn Key::diatonic_notes(self : Key) -> Array[Note] {
   let root_note = Note::new(self.root, self.accidental, 4)
   generate_scale(root_note, self.scale_type)
 }
 
-pub fn Key::analyze_chord(self : Key, chord_symbol : String) -> Result[String, String] {
+///|
+pub fn Key::analyze_chord(
+  self : Key,
+  chord_symbol : String,
+) -> Result[String, String] {
   let (chord_root, chord_type) = match parse_chord_symbol(chord_symbol) {
     Ok(val) => val
     Err(e) => return Err(e)
@@ -84,7 +98,11 @@ pub fn Key::analyze_chord(self : Key, chord_symbol : String) -> Result[String, S
 
   let is_uppercase = match chord_type {
     MajorTriad | MajorSeventh | DominantSeventh | AugmentedTriad => true
-    MinorTriad | MinorSeventh | DiminishedTriad | DiminishedSeventh | HalfDiminishedSeventh => false
+    MinorTriad
+    | MinorSeventh
+    | DiminishedTriad
+    | DiminishedSeventh
+    | HalfDiminishedSeventh => false
   }
 
   let roman_numeral = if is_uppercase {

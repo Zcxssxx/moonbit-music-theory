@@ -1,1 +1,3 @@
-// Theory package
+import {
+  "moonbitlang/core/json",
+}

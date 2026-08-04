@@ -2,5 +2,5 @@ pkgtype(kind: "executable")
 
 import {
   "Zcxssxx/moonbit-music-theory/src/theory",
-  "moonbitlang/core/env"
+  "moonbitlang/core/env",
 }

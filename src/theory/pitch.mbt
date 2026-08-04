@@ -1,3 +1,4 @@
+///|
 pub(all) enum NoteLetter {
   C
   D
@@ -8,22 +9,30 @@ pub(all) enum NoteLetter {
   B
 } derive(Eq, Debug)
 
+///|
 pub(all) enum Accidental {
   Flat
   Natural
   Sharp
 } derive(Eq, Debug)
 
+///|
 pub(all) struct Note {
   letter : NoteLetter
   accidental : Accidental
   octave : Int
 } derive(Eq, Debug)
 
-pub fn Note::new(letter : NoteLetter, accidental : Accidental, octave : Int) -> Note {
+///|
+pub fn Note::new(
+  letter : NoteLetter,
+  accidental : Accidental,
+  octave : Int,
+) -> Note {
   { letter, accidental, octave }
 }
 
+///|
 pub fn NoteLetter::to_int(self : NoteLetter) -> Int {
   match self {
     C => 0
@@ -36,6 +45,7 @@ pub fn NoteLetter::to_int(self : NoteLetter) -> Int {
   }
 }
 
+///|
 pub fn NoteLetter::from_int(val : Int) -> NoteLetter {
   match val % 12 {
     0 => C
@@ -49,6 +59,7 @@ pub fn NoteLetter::from_int(val : Int) -> NoteLetter {
   }
 }
 
+///|
 pub fn Accidental::to_int(self : Accidental) -> Int {
   match self {
     Flat => -1
@@ -57,14 +68,16 @@ pub fn Accidental::to_int(self : Accidental) -> Int {
   }
 }
 
+///|
 pub fn Note::to_midi(self : Note) -> Int {
   let base = self.letter.to_int()
   let acc = self.accidental.to_int()
   (self.octave + 1) * 12 + base + acc
 }
 
+///|
 pub fn Note::from_midi(midi : Int) -> Note {
-  let octave = (midi / 12) - 1
+  let octave = midi / 12 - 1
   let pc = midi % 12
   let (letter, accidental) = match pc {
     0 => (NoteLetter::C, Accidental::Natural)
@@ -84,6 +97,7 @@ pub fn Note::from_midi(midi : Int) -> Note {
   { letter, accidental, octave }
 }
 
+///|
 pub fn NoteLetter::to_string(self : NoteLetter) -> String {
   match self {
     C => "C"
@@ -96,6 +110,7 @@ pub fn NoteLetter::to_string(self : NoteLetter) -> String {
   }
 }
 
+///|
 pub fn Accidental::to_string(self : Accidental) -> String {
   match self {
     Flat => "b"
@@ -104,24 +119,29 @@ pub fn Accidental::to_string(self : Accidental) -> String {
   }
 }
 
+///|
 pub fn Note::to_string(self : Note) -> String {
   let letter_str = self.letter.to_string()
   let acc_str = self.accidental.to_string()
   "\{letter_str}\{acc_str}\{self.octave}"
 }
 
+///|
 pub impl Show for NoteLetter with fn output(self, logger) {
   logger.write_string(self.to_string())
 }
 
+///|
 pub impl Show for Accidental with fn output(self, logger) {
   logger.write_string(self.to_string())
 }
 
+///|
 pub impl Show for Note with fn output(self, logger) {
   logger.write_string(self.to_string())
 }
 
+///|
 pub fn Note::parse(str : String) -> Result[Note, String] {
   let len = str.length()
   if len < 2 {

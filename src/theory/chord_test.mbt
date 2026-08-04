@@ -1,3 +1,4 @@
+///|
 test "chord parsing and generation" {
   // Cmaj7
   let parsed1 = parse_chord_symbol("Cmaj7")

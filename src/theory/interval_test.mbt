@@ -1,3 +1,4 @@
+///|
 test "interval parsing and transposition" {
   let c4 = Note::parse("C4").unwrap()
 

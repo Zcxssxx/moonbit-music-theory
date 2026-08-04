@@ -1,0 +1,56 @@
+name: check
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+
+jobs:
+  check:
+    strategy:
+      matrix:
+        version: [stable]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Moonbit
+        uses: illusory0x0/setup-moonbit@v0.1.0
+        with: 
+          version: ${{ matrix.version }}
+
+      - name: Moonbit Version
+        run: |
+          moon version --all
+
+      - name: Install Dependencies
+        run: |
+          moon update
+          moon install
+
+      - name: Moon Check
+        run: moon check --deny-warn
+
+      - name: Moon Info Check
+        shell: bash
+        run: |
+          moon info --target wasm,wasm-gc,js,native
+          git diff --exit-code
+
+      - name: Moon Format Check
+        shell: bash
+        run: |
+          moon fmt
+          git diff --exit-code
+
+      - name: Setup MSVC
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Moon Test
+        run: |
+          moon test
