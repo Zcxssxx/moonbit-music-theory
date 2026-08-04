@@ -1,4 +1,4 @@
-pub enum IntervalQuality {
+pub(all) enum IntervalQuality {
   Perfect
   Major
   Minor
@@ -6,12 +6,12 @@ pub enum IntervalQuality {
   Diminished
 } derive(Eq, Debug)
 
-pub enum IntervalDirection {
+pub(all) enum IntervalDirection {
   Up
   Down
 } derive(Eq, Debug)
 
-pub struct Interval {
+pub(all) struct Interval {
   quality : IntervalQuality
   number : Int // 1 for Unison, 2 for Second, etc.
   semitones : Int

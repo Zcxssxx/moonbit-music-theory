@@ -1,4 +1,4 @@
-pub enum NoteLetter {
+pub(all) enum NoteLetter {
   C
   D
   E
@@ -8,13 +8,13 @@ pub enum NoteLetter {
   B
 } derive(Eq, Debug)
 
-pub enum Accidental {
+pub(all) enum Accidental {
   Flat
   Natural
   Sharp
 } derive(Eq, Debug)
 
-pub struct Note {
+pub(all) struct Note {
   letter : NoteLetter
   accidental : Accidental
   octave : Int
