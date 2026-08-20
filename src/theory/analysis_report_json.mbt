@@ -119,7 +119,7 @@ pub impl ToJson for ScoreReport with fn to_json(self : ScoreReport) -> Json {
     ("track_count", Json::number(self.track_count.to_double())),
     ("note_event_count", Json::number(self.note_event_count.to_double())),
     ("chord_event_count", Json::number(self.chord_event_count.to_double())),
-    ("pitch_histogram", self.pitch_histogram.to_json()),
+    ("pitch_histogram", ToJson::to_json(self.pitch_histogram)),
     ("register_min", note_option_to_json(self.register_min)),
     ("register_max", note_option_to_json(self.register_max)),
     (
@@ -130,8 +130,8 @@ pub impl ToJson for ScoreReport with fn to_json(self : ScoreReport) -> Json {
         }),
       ),
     ),
-    ("rhythm_summary", self.rhythm_summary.to_json()),
-    ("harmony_summary", self.harmony_summary.to_json()),
+    ("rhythm_summary", ToJson::to_json(self.rhythm_summary)),
+    ("harmony_summary", ToJson::to_json(self.harmony_summary)),
     (
       "voice_leading_warning_count",
       Json::number(self.voice_leading_warning_count.to_double()),
@@ -196,7 +196,7 @@ pub impl @json.FromJson for ScoreReport with fn from_json(json, path) {
 ///|
 fn note_option_to_json(note : Note?) -> Json {
   match note {
-    Some(value) => value.to_json()
+    Some(value) => ToJson::to_json(value)
     None => Json::null()
   }
 }

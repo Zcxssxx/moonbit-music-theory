@@ -11,7 +11,7 @@ pub fn Score::from_json(json : Json) -> Score raise @json.JsonDecodeError {
 ///|
 pub impl ToJson for NoteEvent with fn to_json(self : NoteEvent) -> Json {
   make_score_json_object([
-    ("note", self.note.to_json()),
+    ("note", ToJson::to_json(self.note)),
     ("start_tick", Json::number(self.start_tick.to_double())),
     ("duration_ticks", Json::number(self.duration_ticks.to_double())),
     ("velocity", Json::number(self.velocity.to_double())),
@@ -49,7 +49,7 @@ pub impl @json.FromJson for NoteEvent with fn from_json(json, path) {
 ///|
 pub impl ToJson for ChordEvent with fn to_json(self : ChordEvent) -> Json {
   make_score_json_object([
-    ("root", self.root.to_json()),
+    ("root", ToJson::to_json(self.root)),
     ("chord_type", Json::string(self.chord_type.to_string())),
     ("start_tick", Json::number(self.start_tick.to_double())),
     ("duration_ticks", Json::number(self.duration_ticks.to_double())),
@@ -121,10 +121,13 @@ pub impl @json.FromJson for TempoPoint with fn from_json(json, path) {
 pub impl ToJson for ScoreTrack with fn to_json(self : ScoreTrack) -> Json {
   make_score_json_object([
     ("name", Json::string(self.name)),
-    ("events", Json::array(self.events.map(fn(event) { event.to_json() }))),
+    (
+      "events",
+      Json::array(self.events.map(fn(event) { ToJson::to_json(event) })),
+    ),
     (
       "chord_events",
-      Json::array(self.chord_events.map(fn(event) { event.to_json() })),
+      Json::array(self.chord_events.map(fn(event) { ToJson::to_json(event) })),
     ),
   ])
 }
@@ -158,10 +161,13 @@ pub impl @json.FromJson for ScoreTrack with fn from_json(json, path) {
 pub impl ToJson for Score with fn to_json(self : Score) -> Json {
   make_score_json_object([
     ("ppq", Json::number(self.ppq.to_double())),
-    ("tracks", Json::array(self.tracks.map(fn(track) { track.to_json() }))),
+    (
+      "tracks",
+      Json::array(self.tracks.map(fn(track) { ToJson::to_json(track) })),
+    ),
     (
       "tempo_map",
-      Json::array(self.tempo_map.map(fn(point) { point.to_json() })),
+      Json::array(self.tempo_map.map(fn(point) { ToJson::to_json(point) })),
     ),
     (
       "time_signature",
