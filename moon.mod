@@ -15,12 +15,12 @@ version = "0.1.0"
 
 readme = "README.mbt.md"
 
-repository = ""
+repository = "https://github.com/Zcxssxx/moonbit-music-theory"
 
 license = "Apache-2.0"
 
-keywords = [ ]
+keywords = ["music", "theory", "midi", "harmony", "moonbit"]
 
 preferred_target = "wasm-gc"
 
-description = ""
+description = "Music theory analysis, composition utilities, and MIDI tooling for MoonBit."

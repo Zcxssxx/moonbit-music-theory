@@ -1,4 +1,7 @@
 import {
+  "moonbitlang/core/byte",
+  "moonbitlang/core/bytes",
+  "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/json",
   "moonbitlang/core/math",
 }

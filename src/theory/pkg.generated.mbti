@@ -9,7 +9,15 @@ import {
 // Values
 pub fn analyze_chord_notes(Array[Note]) -> Result[(Note, ChordType, Int), String]
 
+pub fn analyze_harmony(Key, Array[String]) -> HarmonyAnalysis
+
 pub fn analyze_progression_cadences(Array[String]) -> Array[(Int, String)]
+
+pub fn analyze_score(Score, Key) -> ScoreReport
+
+pub fn analyze_syncopation(RhythmPattern, BeatGrid) -> Int
+
+pub fn cadence_context_index(HarmonyAnalysis) -> Int
 
 pub fn check_classical_progression(Array[String]) -> Array[String]
 
@@ -17,7 +25,15 @@ pub fn check_first_species(Array[Note], Array[Note]) -> Array[CounterpointWarnin
 
 pub fn check_voicing_spacing(Array[Note]) -> Array[String]
 
+pub fn classify_cadence_context(HarmonyAnalysis) -> CadenceKind
+
+pub fn classify_voice_motion(lower_start~ : Note?, lower_end~ : Note?, upper_start~ : Note?, upper_end~ : Note?) -> MotionType
+
+pub fn decode_variable_length(Bytes, Int) -> (Int, Int) raise MidiBinaryError
+
 pub fn detect_cadence(String, String) -> String
+
+pub fn encode_variable_length(Int) -> Array[Byte] raise MidiBinaryError
 
 pub fn find_optimal_voicing(Array[Note], Note, ChordType) -> Array[Note]
 
@@ -47,6 +63,10 @@ pub fn scale_common_notes(Array[Note], Array[Note]) -> Array[Note]
 
 pub fn scale_degree_name(Int) -> String
 
+pub fn score_progression_context(HarmonyAnalysis) -> ProgressionScore
+
+pub fn solve_voice_leading(Array[Note], Note, ChordType, VoiceLeadingOptions) -> VoiceLeadingResult raise Failure
+
 pub fn to_drop_2(Array[Note]) -> Array[Note]
 
 pub fn to_drop_3(Array[Note]) -> Array[Note]
@@ -54,6 +74,10 @@ pub fn to_drop_3(Array[Note]) -> Array[Note]
 pub fn to_open_voicing(Array[Note]) -> Array[Note]
 
 // Errors
+pub(all) suberror MidiBinaryError {
+  InvalidMidi(String)
+} derive(Eq, ToJson, @debug.Debug)
+pub fn MidiBinaryError::to_string(Self) -> String
 
 // Types and methods
 pub(all) enum Accidental {
@@ -74,6 +98,38 @@ pub(all) enum AugmentedSixthType {
 } derive(Eq, @debug.Debug)
 pub fn AugmentedSixthType::to_string(Self) -> String
 pub impl Show for AugmentedSixthType
+
+pub(all) struct BeatGrid {
+  ppq : Int
+  subdivision : Int
+  time_signature : TimeSignature
+  step_ticks : Int
+  beat_ticks : Int
+} derive(Eq, @debug.Debug)
+pub fn BeatGrid::new(ppq~ : Int, subdivision~ : Int, time_signature? : TimeSignature) -> Self raise Failure
+pub fn BeatGrid::quantize_tick(Self, Int, QuantizeMode) -> Int raise Failure
+
+pub(all) enum CadenceKind {
+  Authentic
+  Plagal
+  Deceptive
+  Half
+  Undetermined
+} derive(Eq, @debug.Debug)
+pub fn CadenceKind::to_string(Self) -> String
+pub impl Show for CadenceKind
+
+pub(all) struct ChordEvent {
+  root : Note
+  chord_type : ChordType
+  start_tick : Int
+  duration_ticks : Int
+  velocity : Int
+  channel : Int
+} derive(Eq, @debug.Debug)
+pub fn ChordEvent::new(Note, ChordType, Int, Int, Int, Int) -> Self raise Failure
+pub impl ToJson for ChordEvent
+pub impl @json.FromJson for ChordEvent
 
 pub(all) enum ChordFunction {
   Tonic
@@ -118,6 +174,46 @@ pub(all) struct CounterpointWarning {
 } derive(Eq, @debug.Debug)
 pub fn CounterpointWarning::to_string(Self) -> String
 pub impl Show for CounterpointWarning
+
+pub(all) struct HarmonyAnalysis {
+  key : Key
+  symbols : Array[String]
+  romans : Array[String]
+  functions : Array[HarmonyFunction]
+  findings : Array[HarmonyFinding]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct HarmonyFinding {
+  index : Int
+  symbol : String
+  kind : HarmonyFindingKind
+  detail : String
+} derive(Eq, @debug.Debug)
+
+pub(all) enum HarmonyFindingKind {
+  Cadence(CadenceKind)
+  Ambiguity
+  InvalidInput
+} derive(Eq, @debug.Debug)
+
+pub(all) enum HarmonyFunction {
+  Tonic
+  Predominant
+  Dominant
+  Ambiguous
+} derive(Eq, @debug.Debug)
+
+pub(all) struct HarmonySummary {
+  symbol_count : Int
+  cadence : CadenceKind
+  tonic_count : Int
+  predominant_count : Int
+  dominant_count : Int
+  ambiguous_count : Int
+  finding_count : Int
+} derive(Eq, @debug.Debug)
+pub impl ToJson for HarmonySummary
+pub impl @json.FromJson for HarmonySummary
 
 pub(all) struct Interval {
   quality : IntervalQuality
@@ -183,8 +279,10 @@ pub(all) struct MidiFile {
   tracks : Array[MidiTrack]
 } derive(Eq, @debug.Debug)
 pub fn MidiFile::add_track(Self, String) -> MidiTrack
+pub fn MidiFile::from_smf(Bytes) -> Self raise MidiBinaryError
 pub fn MidiFile::new(Int) -> Self
 pub fn MidiFile::to_json(Self) -> Json
+pub fn MidiFile::to_smf(Self) -> Bytes raise MidiBinaryError
 
 pub(all) struct MidiTrack {
   name : String
@@ -194,6 +292,17 @@ pub fn MidiTrack::add_chord(Self, Int, Array[Note], Int, Int) -> Unit
 pub fn MidiTrack::add_note_off(Self, Int, Note) -> Unit
 pub fn MidiTrack::add_note_on(Self, Int, Note, Int) -> Unit
 pub fn MidiTrack::to_json(Self) -> Json
+
+pub(all) enum MotionType {
+  Parallel
+  Contrary
+  Oblique
+  Similar
+  Static
+  MissingVoice
+} derive(Eq, @debug.Debug)
+pub fn MotionType::to_string(Self) -> String
+pub impl Show for MotionType
 
 pub(all) struct Note {
   letter : NoteLetter
@@ -231,6 +340,17 @@ pub fn NoteDuration::to_ticks(Self, Int) -> Int
 pub fn NoteDuration::tuplet(Self, TimeSignature, Int, Int) -> Double
 pub impl Show for NoteDuration
 
+pub(all) struct NoteEvent {
+  note : Note
+  start_tick : Int
+  duration_ticks : Int
+  velocity : Int
+  channel : Int
+} derive(Eq, @debug.Debug)
+pub fn NoteEvent::new(Note, Int, Int, Int, Int) -> Self raise Failure
+pub impl ToJson for NoteEvent
+pub impl @json.FromJson for NoteEvent
+
 pub(all) enum NoteLetter {
   C
   D
@@ -257,6 +377,48 @@ pub fn PitchClassSet::prime_form(Self) -> Self
 pub fn PitchClassSet::to_string(Self) -> String
 pub fn PitchClassSet::transpose(Self, Int) -> Self
 pub impl Show for PitchClassSet
+
+pub(all) struct PitchHistogram {
+  counts : Array[Int]
+} derive(Eq, @debug.Debug)
+pub fn PitchHistogram::to_string(Self) -> String
+pub impl Show for PitchHistogram
+pub impl ToJson for PitchHistogram
+pub impl @json.FromJson for PitchHistogram
+
+pub(all) struct ProgressionScore {
+  total : Int
+  explanation : String
+  findings : Array[HarmonyFinding]
+} derive(Eq, @debug.Debug)
+
+pub(all) enum QuantizeMode {
+  Floor
+  Ceiling
+  HalfUp
+} derive(Eq, @debug.Debug)
+
+pub(all) struct RhythmPattern {
+  durations : Array[Int]
+} derive(Eq, @debug.Debug)
+pub fn RhythmPattern::new(Array[Int]) -> Self raise Failure
+pub fn RhythmPattern::quantize_tick(Self, Int, BeatGrid, QuantizeMode) -> Int raise Failure
+pub fn RhythmPattern::repeat(Self, Int) -> Self raise Failure
+pub fn RhythmPattern::reverse(Self) -> Self
+pub fn RhythmPattern::rotate(Self, Int) -> Self
+
+pub(all) struct RhythmSummary {
+  meter_supported : Bool
+  beat_ticks : Int
+  beat_count : Int
+  average_duration_ticks : Int
+  density_per_beat_milli : Int
+  syncopation : Int
+  on_beat_attacks : Int
+  off_beat_attacks : Int
+} derive(Eq, @debug.Debug)
+pub impl ToJson for RhythmSummary
+pub impl @json.FromJson for RhythmSummary
 
 pub(all) enum ScaleType {
   Major
@@ -285,6 +447,60 @@ pub fn ScaleType::parse(String) -> Result[Self, String]
 pub fn ScaleType::to_string(Self) -> String
 pub impl Show for ScaleType
 
+pub(all) struct Score {
+  ppq : Int
+  tracks : Array[ScoreTrack]
+  tempo_map : Array[TempoPoint]
+  time_signature : TimeSignature
+} derive(Eq, @debug.Debug)
+pub fn Score::add_tempo_point(Self, TempoPoint) -> Unit
+pub fn Score::add_track(Self, String) -> ScoreTrack
+pub fn Score::duration_ticks(Self) -> Int
+pub fn Score::from_json(Json) -> Self raise @json.JsonDecodeError
+pub fn Score::new(Int, time_signature? : TimeSignature) -> Self raise Failure
+pub fn Score::stretch(Self, Double) -> Self raise Failure
+pub fn Score::to_json(Self) -> Json
+pub fn Score::transpose(Self, Interval) -> Self
+pub impl ToJson for Score
+pub impl @json.FromJson for Score
+
+pub(all) struct ScoreReport {
+  duration_ticks : Int
+  track_count : Int
+  note_event_count : Int
+  chord_event_count : Int
+  pitch_histogram : PitchHistogram
+  register_min : Note?
+  register_max : Note?
+  melodic_intervals : Array[Int]
+  rhythm_summary : RhythmSummary
+  harmony_summary : HarmonySummary
+  voice_leading_warning_count : Int
+} derive(Eq, @debug.Debug)
+pub fn ScoreReport::text(Self) -> String
+pub fn ScoreReport::to_json(Self) -> Json
+pub fn ScoreReport::to_text(Self) -> String
+pub impl ToJson for ScoreReport
+pub impl @json.FromJson for ScoreReport
+
+pub(all) struct ScoreTrack {
+  name : String
+  events : Array[NoteEvent]
+  chord_events : Array[ChordEvent]
+} derive(Eq, @debug.Debug)
+pub fn ScoreTrack::add_chord(Self, ChordEvent) -> Unit
+pub fn ScoreTrack::add_note(Self, NoteEvent) -> Unit
+pub impl ToJson for ScoreTrack
+pub impl @json.FromJson for ScoreTrack
+
+pub(all) struct TempoPoint {
+  start_tick : Int
+  bpm : Double
+} derive(Eq, @debug.Debug)
+pub fn TempoPoint::new(Int, Double) -> Self raise Failure
+pub impl ToJson for TempoPoint
+pub impl @json.FromJson for TempoPoint
+
 pub(all) struct TimeSignature {
   beats : Int
   beat_value : Int
@@ -303,7 +519,32 @@ pub fn TuningSystem::parse(String) -> Result[Self, String]
 pub fn TuningSystem::to_string(Self) -> String
 pub impl Show for TuningSystem
 
+pub(all) struct VoiceLeadingCost {
+  total_semitone_motion : Int
+  max_single_voice_motion : Int
+  common_tones : Int
+  lexicographic_midi : Array[Int]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct VoiceLeadingOptions {
+  lowest_midi : Int
+  highest_midi : Int
+  max_spacing : Int
+} derive(Eq, @debug.Debug)
+pub fn VoiceLeadingOptions::default() -> Self
+pub fn VoiceLeadingOptions::new(lowest_midi~ : Int, highest_midi~ : Int, max_spacing~ : Int) -> Self
+
+pub(all) struct VoiceLeadingResult {
+  start_voicing : Array[Note]
+  target_voicing : Array[Note]
+  voice_movements : Array[Int]
+  total_semitone_motion : Int
+  max_single_voice_motion : Int
+  common_tones : Int
+  cost : VoiceLeadingCost
+  warnings : Array[CounterpointWarning]
+} derive(Eq, @debug.Debug)
+
 // Type aliases
 
 // Traits
-

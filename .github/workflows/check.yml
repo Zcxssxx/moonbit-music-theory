@@ -35,6 +35,9 @@ jobs:
       - name: Moon Check
         run: moon check --deny-warn
 
+      - name: All target checks
+        run: moon check --target all --deny-warn
+
       - name: Moon Info Check
         shell: bash
         run: |
@@ -54,3 +57,10 @@ jobs:
       - name: Moon Test
         run: |
           moon test
+
+      - name: CLI smoke tests
+        shell: bash
+        run: |
+          moon run src/cli -- report C major I,IV,V,I
+          moon run src/cli -- report-json C major I,IV,V,I
+          moon run src/cli -- midi-roundtrip I,IV,V,I

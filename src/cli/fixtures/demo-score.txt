@@ -1,0 +1,4 @@
+# Deterministic CLI acceptance fixture
+key = C major
+progression = I,IV,V,I
+commands = report,report-json,midi-roundtrip,generate

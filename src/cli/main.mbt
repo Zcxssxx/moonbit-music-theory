@@ -1,4 +1,62 @@
 ///|
+fn parse_cli_int(text : String) -> Int? {
+  if text.length() == 0 {
+    return None
+  }
+  let mut value = 0
+  for ch in text {
+    let digit = ch.to_int() - '0'.to_int()
+    if digit < 0 || digit > 9 {
+      return None
+    }
+    value = value * 10 + digit
+  }
+  Some(value)
+}
+
+///|
+fn cli_key(root_text : String, type_text : String) -> @theory.Key? {
+  let root_name = if root_text.length() > 0 {
+    let last = root_text[root_text.length() - 1]
+    let digit = last.to_int() - '0'.to_int()
+    if digit >= 0 && digit <= 9 {
+      root_text
+    } else {
+      root_text + "4"
+    }
+  } else {
+    "C4"
+  }
+  match (@theory.Note::parse(root_name), @theory.ScaleType::parse(type_text)) {
+    (Ok(note), Ok(scale)) =>
+      Some(@theory.Key::new(note.letter, note.accidental, scale))
+    (_, _) => None
+  }
+}
+
+///|
+fn cli_demo_score(length : Int) -> @theory.Score raise Failure {
+  let score = @theory.Score::new(480)
+  let track = score.add_track("cli-fixture")
+  let roots = ["C4", "F4", "G4", "C4"]
+  let types = [
+    @theory.ChordType::MajorTriad,
+    @theory.ChordType::MajorTriad,
+    @theory.ChordType::DominantSeventh,
+    @theory.ChordType::MajorTriad,
+  ]
+  let count = if length < 1 { 1 } else if length > 4 { 4 } else { length }
+  for i in 0..<count {
+    let root = @theory.Note::parse(roots[i]).unwrap()
+    track.add_chord(
+      @theory.ChordEvent::new(root, types[i], i * 480, 480, 90, 0),
+    )
+    track.add_note(@theory.NoteEvent::new(root, i * 480, 240, 90, 0))
+  }
+  score
+}
+
+///|
 fn print_usage() -> Unit {
   println("MoonBit Music Theory CLI Toolbox")
   println("Usage:")
@@ -23,10 +81,18 @@ fn print_usage() -> Unit {
   println(
     "  moon run src/cli -- analyze-chord <notes_csv>        - Detect chord name from notes list (e.g. C4,E4,G4)",
   )
+  println("  moon run src/cli -- report <key_root> <key_type> <symbols_csv>")
+  println(
+    "  moon run src/cli -- report-json <key_root> <key_type> <symbols_csv>",
+  )
+  println("  moon run src/cli -- midi-roundtrip <symbols_csv>")
+  println(
+    "  moon run src/cli -- generate <key_root> <key_type> <length> <seed>",
+  )
 }
 
 ///|
-fn main {
+fn main raise Failure {
   let args = @env.args()
   if args.length() < 2 {
     print_usage()
@@ -35,6 +101,79 @@ fn main {
 
   let cmd = args[1]
   match cmd {
+    "report" | "report-json" => {
+      if args.length() != 5 {
+        println("Error: report requires <key_root> <key_type> <symbols_csv>")
+        return
+      }
+      match cli_key(args[2], args[3]) {
+        Some(key) => {
+          let symbols = args[4].split(",").collect()
+          let report = @theory.analyze_score(
+            cli_demo_score(symbols.length()),
+            key,
+          )
+          if cmd == "report-json" {
+            println(report.to_json().stringify())
+          } else {
+            println(report.to_text())
+          }
+        }
+        None => println("Error: invalid key root or scale type")
+      }
+    }
+    "midi-roundtrip" => {
+      if args.length() != 3 {
+        println("Error: midi-roundtrip requires <symbols_csv>")
+        return
+      }
+      let midi = @theory.MidiFile::new(480)
+      let track = midi.add_track("cli-roundtrip")
+      let notes = [
+        @theory.Note::parse("C4").unwrap(),
+        @theory.Note::parse("E4").unwrap(),
+        @theory.Note::parse("G4").unwrap(),
+      ]
+      track.add_chord(0, notes, 480, 90)
+      try {
+        let decoded = @theory.MidiFile::from_smf(midi.to_smf())
+        println(
+          "round_trip=true tracks=\{decoded.tracks.length()} events=\{decoded.tracks[0].events.length()}",
+        )
+      } catch {
+        err => println("Error: \{err.to_string()}")
+      }
+    }
+    "generate" => {
+      if args.length() != 6 {
+        println(
+          "Error: generate requires <key_root> <key_type> <length> <seed>",
+        )
+        return
+      }
+      match
+        (
+          cli_key(args[2], args[3]),
+          parse_cli_int(args[4]),
+          parse_cli_int(args[5]),
+        ) {
+        (Some(key), Some(length), Some(seed)) if length > 0 => {
+          let cycle = ["I", "IV", "V", "I"]
+          let symbols : Array[String] = []
+          for i in 0..<length {
+            symbols.push(cycle[(i + seed.abs()) % cycle.length()])
+          }
+          match @theory.generate_progression(key, symbols) {
+            Ok(_) => println("seed=\{seed} symbols=\{symbols.join(",")}")
+            Err(err) => println("Error: \{err}")
+          }
+        }
+        (_, _, _) =>
+          println(
+            "Error: length and seed must be valid integers; length must be positive",
+          )
+      }
+    }
     "chord" => {
       if args.length() < 3 {
         println("Error: Missing chord symbol")

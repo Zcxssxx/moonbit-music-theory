@@ -11,6 +11,8 @@ A lightweight, zero-dependency, pure algebraic and computational music theory li
 - **Roman Numeral Analysis**: Chromatic degree analysis under a key signature (e.g. `G7` under `C Major` is analyzed as `V7`, `Eb` is `bIII`).
 - **JSON Serialization**: Full serialization/deserialization for core models (`Note`, `Interval`, `Key`).
 - **CLI query utility**: Command-line tool to query chords, scales, transposition, and Roman numeral degree analysis.
+- **Scores and diagnostics**: Typed score events, rhythm grids, harmony/cadence analysis, voice leading, and stable reports.
+- **SMF interoperability**: Checked Standard MIDI File binary encoding and decoding with malformed-input diagnostics.
 
 ## Usage & Examples
 
@@ -53,4 +55,14 @@ moon run src/cli -- transpose C4 M3
 
 # Roman numeral degree analysis
 moon run src/cli -- roman C major G7
+moon run src/cli -- report C major I,IV,V,I
+moon run src/cli -- midi-roundtrip I,IV,V,I
+```
+
+## Development
+
+```bash
+moon check --deny-warn
+moon test --deny-warn
+moon fmt
 ```

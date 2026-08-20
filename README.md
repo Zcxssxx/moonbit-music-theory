@@ -11,6 +11,10 @@ A lightweight, zero-dependency, pure algebraic and computational music theory li
 - **Roman Numeral Analysis**: Chromatic degree analysis under a key signature (e.g. `G7` under `C Major` is analyzed as `V7`, `Eb` is `bIII`).
 - **JSON Serialization**: Full serialization/deserialization for core models (`Note`, `Interval`, `Key`).
 - **CLI query utility**: Command-line tool to query chords, scales, transposition, and Roman numeral degree analysis.
+- **Score modeling**: Typed note/chord events, tempo maps, time signatures, deterministic transforms, and JSON interchange.
+- **Rhythm and harmony diagnostics**: Beat grids, quantization, syncopation, functional harmony, cadence detection, progression scoring, and constrained voice leading.
+- **Standard MIDI files**: Checked SMF encoding/decoding with canonical VLQs, running status, track names, and malformed-input diagnostics.
+- **Analysis reports**: Stable text/JSON reports with pitch histograms, register, rhythm, harmony, and counterpoint diagnostics.
 
 ## Usage & Examples
 
@@ -53,4 +57,25 @@ moon run src/cli -- transpose C4 M3
 
 # Roman numeral degree analysis
 moon run src/cli -- roman C major G7
+
+# Generate a deterministic score report
+moon run src/cli -- report C major I,IV,V,I
+
+# Encode/decode a MIDI fixture
+moon run src/cli -- midi-roundtrip I,IV,V,I
 ```
+
+## Development
+
+```bash
+moon check --deny-warn
+moon test --deny-warn
+moon fmt
+```
+
+The native benchmark fixture is run with `moon run bench --target native --release -- 1000`.
+For measured local samples, use `pwsh -File scripts/benchmark.ps1`; the script records a toolchain failure instead of inventing timings when native compilation is unavailable.
+
+## License
+
+Apache-2.0. See [LICENSE](LICENSE).
