@@ -19,7 +19,7 @@ repository = "https://github.com/Zcxssxx/moonbit-music-theory"
 
 license = "Apache-2.0"
 
-keywords = ["music", "theory", "midi", "harmony", "moonbit"]
+keywords = [ "music", "theory", "midi", "harmony", "moonbit" ]
 
 preferred_target = "wasm-gc"
 
