@@ -18,10 +18,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Setup Moonbit
-        uses: illusory0x0/setup-moonbit@v0.1.0
-        with: 
-          version: ${{ matrix.version }}
+      - name: Install MoonBit (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: Install MoonBit (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+          irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
+          "C:\Users\runneradmin\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
 
       - name: Moonbit Version
         run: |
@@ -30,7 +40,6 @@ jobs:
       - name: Install Dependencies
         run: |
           moon update
-          moon install
 
       - name: Moon Check
         run: moon check --deny-warn
@@ -56,7 +65,7 @@ jobs:
 
       - name: Moon Test
         run: |
-          moon test
+          moon test --target all
 
       - name: CLI smoke tests
         shell: bash
